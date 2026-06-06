@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Enterprise Simple Dashboard & Timeline Track</title>
+
+    <style>
+        /* ==========================================================================
+           COLOR & DESIGN CUSTOMIZATION LAYER (Change these values to change the look!)
+           ========================================================================== */
+        :root {
+            --primary-color: #B7410E;
+            /* Main header, buttons, and navigation backgrounds */
+            --primary-hover: #ff0000;
+            /* Button color when hovered over with a cursor */
+            --bg-color: #ebcece;
+            /* Main background canvas color behind the panels */
+            --card-bg: #FFCE1B;
+            /* Background fill color for individual workspace boxes */
+            --text-color: #333333;
+            /* Universal text font color */
+            --accent-important: #ff3b30;
+            /* Color used to highlight Critical/Urgent priority tracks */
+            --accent-node: #38b93c;
+            /* Border line accent color for normal timeline markers */
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background: var(--primary-color);
+            color: rgb(0, 0, 0);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        /* Multi-Column Main Layout Grid */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            height: calc(100vh - 62px);
+        }
+
+        @media (min-width: 992px) {
+            .app-layout {
+                grid-template-columns: 240px 1fr 340px;
+            }
+        }
+
+        /* Sidebar Navigation Controls */
+        .sidebar-nav {
+            background: #069494;
+            border-right: 1px solid #ddd;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .nav-btn {
+            background: transparent;
+            color: #000000;
+            border: none;
+            text-align: left;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+            font-family: 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
+        }
+
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Version Label Layout Stamp */
+        .version-stamp {
+            margin-top: auto;
+            padding: 10px;
+            font-size: 11px;
+            color: #777;
+            font-weight: bold;
+            border-top: 1px solid #ccc;
+        }
+
+        /* Central Workspace Control Area */
+        .main-content {
+            padding: 25px;
+            overflow-y: auto;
+            background: #BE5103;
+        }
+
+        /* Right Hand Chat Component Column */
+        .chat-sidebar {
+            background: #fdfdfd;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-sidebar-header {
+            background: #e8e8f5;
+            padding: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages-stream {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f4f4f9;
+        }
+
+        .chat-bubble {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            max-width: 85%;
+            font-size: 13px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Panel container blocks */
+        .panel-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e1e7;
+            margin-bottom: 20px;
+        }
+
+        .panel-box h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid #f0f0f5;
+            padding-bottom: 6px;
+        }
+
+        /* Form elements inputs */
+        input,
+        select,
+        textarea,
+        button {
+            width: 100%;
+            padding: 10px 12px;
+            margin: 6px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Tab switching architecture helpers */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Graphic Timeline Elements */
+        .timeline-track {
+            position: relative;
+            padding-left: 20px;
+            border-left: 3px solid var(--primary-color);
+            margin-top: 20px;
+        }
+
+        .interactive-node-card {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            border-left: 6px solid var(--accent-node);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .interactive-node-card:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .interactive-node-card.critical {
+            border-left-color: var(--accent-important);
+            background: #fffdfd;
+        }
+
+        .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .inbox-dot {
+            background: red;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 50%;
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="auth-screen"
+        style="max-width: 400px; margin: 100px auto; padding: 30px; background: white; border: 1px solid #ddd; border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h2 style="color: var(--primary-color); margin-top:0;">Workspace Access</h2>
+        <input type="text" id="login-username" placeholder="Username">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="handleLogin()">Launch Control Deck</button>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <header>
+            <h1>Project TIMELINE Hub</h1>
+            <div>
+                User Session: <b id="user-display-tag"></b>
+                <button onclick="handleLogout()"
+                    style="background:#a33c3c; width:auto; margin-left:15px; padding: 5px 12px;">Log Out</button>
+            </div>
+        </header>
+
+        <div class="app-layout">
+
+            <div class="sidebar-nav">
+                <button class="nav-btn active" onclick="switchTab('tab-timeline', this)">Progression Track</button>
+                <button class="nav-btn" onclick="switchTab('tab-directories', this)"> All Branch Views</button>
+                <button class="nav-btn" onclick="switchTab('tab-summaries', this)"> Executive Briefs</button>
+                <button class="nav-btn" onclick="switchTab('tab-teams', this)">Groups Matrix</button>
+                <button class="nav-btn" onclick="switchTab('tab-inbox', this)"> Inbox <span id="badge-count-ui"
+                        class="inbox-dot" style="display:none;">0</span></button>
+                <button class="nav-btn" onclick="switchTab('tab-backups', this)"> Settings & Sync</button>
+
+                <div class="version-stamp">Build 2.1</div>
+            </div>
+
+            <div class="main-content">
+
+                <div id="tab-timeline" class="tab-panel active">
+
+                    <div class="panel-box" style="background: #ececf6; border-left: 5px solid var(--primary-color);">
+                        <label style="font-weight: bold; color: var(--primary-color); font-size: 14px;">Select Target
+                            Project Tracking Focus:</label>
+                        <select id="timeline-project-context-selector" onchange="handleProjectContextSwitch()"
+                            style="font-weight: bold; color: var(--primary-color); background: white; border: 1px solid var(--primary-color);">
+                            <option value="Personal">My Personal Project Workspace</option>
+                        </select>
+                    </div>
+
+                    <div class="panel-box" style="background: #f1f8e9; border-left: 5px solid #2e7d32;">
+                        <h3 id="lifecycle-bounds-heading">Configure Personal Project Boundary Ranges</h3>
+                        <p style="font-size:12px; color:#555; margin-top:-8px;">Defining these bounds creates the
+                            absolute timeline anchors for the selected workspace context.</p>
+                        <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                            <div style="flex:1; min-width:180px;">
+                                <label style="font-size:11px; font-weight:bold;">Project Launch Date:</label>
+                                <input type="date" id="setup-start-date">
+                            </div>
+                            <div style="flex:1; min-width:180px;">
+                                <label style="font-size:11px; font-weight:bold;">Project Final Target Due Date:</label>
+                                <input type="date" id="setup-due-date">
+                            </div>
+                        </div>
+                        <button onclick="initializeProjectBounds()"
+                            style="background-color: #2e7d32; margin-top:10px;">Commit/Extend Project
+                            Lifecycles</button>
+                    </div>
+
+                    <div class="panel-box">
+                        <h3 id="append-milestone-heading">Append New Milestone to Personal Project</h3>
+
+                        <div style="display:flex; gap:10px; margin-top:5px;">
+                            <div style="flex:1;">
+                                <span style="font-size:11px; color:#666;">Start Date</span>
+                                <input type="date" id="event-start">
+                            </div>
+                            <div style="flex:1;">
+                                <span style="font-size:11px; color:#666;">Due Date</span>
+                                <input type="date" id="event-due">
+                            </div>
+                        </div>
+
+                        <input type="text" id="event-title" placeholder="Milestone / Target Element Title">
+                        <textarea id="event-desc" placeholder="Scope description parameters..." rows="2"></textarea>
+
+                        <label style="font-size:13px; color:var(--accent-important); font-weight:bold;">
+                            <input type="checkbox" id="event-is-important"> Flag Asset as CRITICAL Priority Status
+                        </label>
+                        <button onclick="addNewMilestoneNode()" style="margin-top:10px;">Deploy Milestone Node</button>
+                    </div>
+
+                    <h3>Interactive Graphical Progression Track</h3>
+                    <p style="font-size:12px; color:#666; margin-top:-8px;">💡 Arranged chronologically from <b>Due
+                            First</b> to <b>Due Last</b> for the active focused project layout.</p>
+                    <div id="timeline-visual-track" class="timeline-track"></div>
+                </div>
+
+                <div id="tab-directories" class="tab-panel">
+                    <h2>Global Timeline Branch Directories</h2>
+                    <div id="all-directories-rendered-container"></div>
+                </div>
+
+                <div id="tab-summaries" class="tab-panel">
+                    <h2>On-Demand Dynamic Abstract Briefings</h2>
+                    <div class="panel-box" style="background:#eef7ff; border-left-color:#007aff;">
+                        <label style="font-size:13px; font-weight:bold;">Select Target Reading Audience:</label>
+                        <select id="summary-persona-select" onchange="renderExecutiveSummaryAbstract()"
+                            style="max-width:300px;">
+                            <option value="investor">💼 Venture Portfolio Investor Brief</option>
+                            <option value="new_hire">🌱 Team Onboarding Sheet Roadmap</option>
+                        </select>
+                    </div>
+                    <div id="summary-brief-output"
+                        style="background:white; padding:20px; border:1px solid #ddd; border-radius:8px; line-height:1.6; font-size:14px;">
+                    </div>
+                </div>
+
+                <div id="tab-teams" class="tab-panel">
+                    <h2>Network Group Collaboration Matrix</h2>
+                    <p style="font-size:13px; color:#555; margin-top:-8px;">🚨 Maximum System Limit: Your account can
+                        only be active in up to **two groups** at a single time.</p>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                        <div class="panel-box">
+                            <h3>Establish Corporate Group</h3>
+                            <input type="text" id="new-team-id-input" placeholder="Unique Team Name String">
+                            <button onclick="createTeamDirectly()" style="margin-top:5px;">Launch Group Context</button>
+                        </div>
+                        <div class="panel-box">
+                            <h3>Dispatch Room Entry Request</h3>
+                            <input type="text" id="join-team-name" placeholder="Target Team Name">
+                            <input type="text" id="join-team-owner" placeholder="Team Owner Username">
+                            <button onclick="sendTeamRequest()" style="margin-top:5px;">Send Workspace
+                                Invitation</button>
+                        </div>
+                    </div>
+
+                    <h3>Your Connected Workspace Groups:</h3>
+                    <div id="active-teams-directory-list"></div>
+                </div>
+
+                <div id="tab-inbox" class="tab-panel">
+                    <h2>Account Notification Hub & Invites</h2>
+                    <div id="inbox-cards-container"></div>
+                </div>
+
+                <div id="tab-backups" class="tab-panel">
+                    <h2>Workspace Customization & Data Sync Options</h2>
+                    <div class="panel-box" style="background:#fff8e1; border-left-color:#ffb300;">
+                        <h3>Data Sync Backups Engine</h3>
+                        <p style="font-size:12px; color:#555;">Text layouts and structural timelines process
+                            automatically. Use this system payload encoder to backup or overwrite workspace parameters.
+                        </p>
+                        <button onclick="downloadBackupPackage()"
+                            style="background:#ffb300; color:#222; margin-bottom:10px;">💾 Download Project Package
+                            (.json)</button>
+                        <br>
+                        <label style="font-size:11px; font-weight:bold; display:block; margin-top:10px;">Overwrite
+                            Active Workspace via Upload:</label>
+                        <input type="file" id="upload-backup-file" accept=".json"
+                            onchange="uploadOverwriteBackupPackage(event)">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <span>💬 Shared ProjectChat Rooms</span>
+                    <button onclick="launchStandaloneChatWindow()"
+                        style="font-size:11px; padding:4px 8px; width:auto; margin:0;">↗️ New Tab View</button>
+                </div>
+                <div style="padding:10px 15px 0 15px;">
+                    <label style="font-size:11px; font-weight:bold; display:block;">Active Messaging Filter
+                        Channel:</label>
+                    <select id="chat-channel-select" onchange="renderChatStreamMessages()"
+                        style="margin:4px 0; padding:6px; font-size:12px;"></select>
+                </div>
+                <div id="chat-lock-container" style="display:flex; flex-direction:column; flex-grow:1;">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="audit-modal-overlay"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:9999;">
+        <div style="background:white; padding:25px; border-radius:8px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto;"
+            onclick="event.stopPropagation()">
+            <h3 id="modal-node-title" style="color:var(--primary-color); margin-top:0;">Inspect Milestone Parameters
+            </h3>
+            <p style="font-size:12px; color:#666;">Timeline Dates: <span id="modal-node-dates"
+                    style="font-weight:bold; color:#000;"></span></p>
+
+            <label style="font-size:11px; font-weight:bold; display:block; margin-top:10px;">Modify Description Context
+                Metric:</label>
+            <textarea id="modal-node-desc" rows="3" style="width:100%;"></textarea>
+
+            <button onclick="saveModalChanges()" style="background:#2e7d32; margin-top:10px;">Update Milestone Scope
+                Logs</button>
+
+            <h4 style="margin:20px 0 5px 0; font-size:13px; border-bottom:1px solid #ccc; padding-bottom:4px;">
+                Historical Scope Activity Audit Log:</h4>
+            <div id="modal-node-history"
+                style="background:#f4f4f9; padding:10px; border-radius:6px; font-size:12px; max-height:150px; overflow-y:auto;">
+            </div>
+
+            <button onclick="closeModalInspector()" style="background:#555; margin-top:15px;">Close Audit Panel</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let dbNodes = [];
+        let dbTeams = [];
+        let dbInvites = [];
+        let dbChat = [];
+        let activeFocusedNodeId = null;
+
+        window.onload = function () {
+            pullDatabaseState();
+
+            const urlCheck = new URLSearchParams(window.location.search);
+            if (urlCheck.get('standaloneChat') === 'true') {
+                renderStandaloneTabRoomLayout();
+                return;
+            }
+
+            const activeSessionUser = sessionStorage.getItem('simp_active_user');
+            if (activeSessionUser) { launchDashboardSuite(activeSessionUser); }
+            setInterval(backgroundSyncEnginePass, 1000);
+        }
+
+        function pullDatabaseState() {
+            if (localStorage.getItem('simp_nodes')) dbNodes = JSON.parse(localStorage.getItem('simp_nodes'));
+            if (localStorage.getItem('simp_teams')) dbTeams = JSON.parse(localStorage.getItem('simp_teams'));
+            if (localStorage.getItem('simp_invites')) dbInvites = JSON.parse(localStorage.getItem('simp_invites'));
+            if (localStorage.getItem('simp_chat')) dbChat = JSON.parse(localStorage.getItem('simp_chat'));
+        }
+
+        function switchTab(tabId, btnRef) {
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnRef.classList.add('active');
+            refreshAllWorkspaceComponents();
+        }
+
+        function handleLogin() {
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+            if (!user || !pass) { alert("Provide baseline entry parameters."); return; }
+
+            const storedPass = localStorage.getItem(`simp_pwd_${user}`);
+            if (storedPass) {
+                if (storedPass !== pass) { alert("Invalid access key authentication code."); return; }
+            } else {
+                localStorage.setItem(`simp_pwd_${user}`, pass);
+                alert("New account profile configured.");
+            }
+            sessionStorage.setItem('simp_active_user', user);
+            launchDashboardSuite(user);
+        }
+
+        function launchDashboardSuite(username) {
+            currentUser = username;
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('user-display-tag').innerText = `@${username}`;
+
+            syncProjectDropdownMenu();
+            loadProjectLifecycleInputs();
+            refreshAllWorkspaceComponents();
+        }
+
+        function handleLogout() { sessionStorage.removeItem('simp_active_user'); location.reload(); }
+
+        /* Dynamic project text label updates based on project selector track */
+        function syncProjectDropdownMenu() {
+            const selector = document.getElementById('timeline-project-context-selector');
+            if (!selector) return;
+
+            const prevVal = selector.value;
+            selector.innerHTML = '<option value="Personal">My Personal Project Workspace</option>';
+
+            const myTeams = getMyTeamsList();
+            myTeams.forEach(team => {
+                selector.innerHTML += `<option value="${team}">Group Track: ${team}</option>`;
+            });
+
+            // Restore selection state safely
+            if ([...selector.options].some(o => o.value === prevVal)) {
+                selector.value = prevVal;
+            } else {
+                selector.value = "Personal";
+            }
+
+            handleProjectContextSwitch();
+        }
+
+        function handleProjectContextSwitch() {
+            const currentScope = document.getElementById('timeline-project-context-selector').value;
+
+            // Adjust heading visuals cleanly
+            document.getElementById('lifecycle-bounds-heading').innerText = `Configure ${currentScope} Project Boundary Ranges`;
+            document.getElementById('append-milestone-heading').innerText = `Append New Milestone to ${currentScope} Project`;
+
+            loadProjectLifecycleInputs();
+            renderMainTimelineTrack();
+        }
+
+        function loadProjectLifecycleInputs() {
+            const currentScope = document.getElementById('timeline-project-context-selector').value;
+
+            let startKey = `bounds_start_${currentUser}`;
+            let dueKey = `bounds_due_${currentUser}`;
+
+            if (currentScope !== 'Personal') {
+                startKey = `bounds_start_team_${currentScope}`;
+                dueKey = `bounds_due_team_${currentScope}`;
+            }
+
+            document.getElementById('setup-start-date').value = localStorage.getItem(startKey) || '';
+            document.getElementById('setup-due-date').value = localStorage.getItem(dueKey) || '';
+        }
+
+        function initializeProjectBounds() {
+            pullDatabaseState();
+            const currentScope = document.getElementById('timeline-project-context-selector').value;
+            const startRange = document.getElementById('setup-start-date').value;
+            const dueRange = document.getElementById('setup-due-date').value;
+
+            if (!startRange || !dueRange) { alert("Fill out baseline layout ranges."); return; }
+            if (new Date(dueRange) < new Date(startRange)) { alert("Operational Error: Target deadline bounds cannot precede initialization dates."); return; }
+
+            let startKey = `bounds_start_${currentUser}`;
+            let dueKey = `bounds_due_${currentUser}`;
+
+            if (currentScope !== 'Personal') {
+                startKey = `bounds_start_team_${currentScope}`;
+                dueKey = `bounds_due_team_${currentScope}`;
+            }
+
+            localStorage.setItem(startKey, startRange);
+            localStorage.setItem(dueKey, dueRange);
+
+            // Clean historical anchor entries matching scope
+            dbNodes = dbNodes.filter(n => !(n.scope === currentScope && n.isSystemLifecycleAnchor && (currentScope !== 'Personal' || n.creator === currentUser)));
+
+            dbNodes.push({
+                id: Date.now() - 2,
+                creator: currentUser,
+                scope: currentScope,
+                startDate: startRange,
+                dueDate: startRange,
+                title: ` ${currentScope.toUpperCase()} PROJECT INITIALIZED`,
+                desc: "The baseline initial structural timeline starting line generated by project lifecycle settings.",
+                isImportant: true,
+                isSystemLifecycleAnchor: true,
+                auditHistory: [{ timestamp: new Date().toLocaleString(), msg: "Project system setup line set." }]
+            });
+
+            dbNodes.push({
+                id: Date.now() - 1,
+                creator: currentUser,
+                scope: currentScope,
+                startDate: dueRange,
+                dueDate: dueRange,
+                title: ` ${currentScope.toUpperCase()} TARGET DEADLINE / LIFECYCLE BOUND`,
+                desc: "The final absolute operational target deadline bound generated by project lifecycle settings.",
+                isImportant: true,
+                isSystemLifecycleAnchor: true,
+                auditHistory: [{ timestamp: new Date().toLocaleString(), msg: "Project system end-range bound locked." }]
+            });
+
+            commitState('simp_nodes', dbNodes);
+            refreshAllWorkspaceComponents();
+            alert(`Project Lifecycle parameters locked for workspace branch: [${currentScope}]`);
+        }
+
+        function addNewMilestoneNode() {
+            pullDatabaseState();
+            const currentScope = document.getElementById('timeline-project-context-selector').value;
+            const start = document.getElementById('event-start').value;
+            const due = document.getElementById('event-due').value;
+            const title = document.getElementById('event-title').value.trim();
+            const desc = document.getElementById('event-desc').value.trim();
+            const important = document.getElementById('event-is-important').checked;
+
+            if (!start || !due || !title) { alert("Populate tracking asset field headers fully."); return; }
+            if (new Date(due) < new Date(start)) { alert("Timeline Structural Error: An individual milestone's target Due Date cannot happen before its starting date line."); return; }
+
+            dbNodes.push({
+                id: Date.now(),
+                creator: currentUser,
+                scope: currentScope,
+                startDate: start,
+                dueDate: due,
+                title: title,
+                desc: desc,
+                isImportant: important,
+                auditHistory: [{ timestamp: new Date().toLocaleString(), msg: `Milestone initial creation registry mapped under scope: [${currentScope}].` }]
+            });
+
+            commitState('simp_nodes', dbNodes);
+            refreshAllWorkspaceComponents();
+
+            document.getElementById('event-start').value = '';
+            document.getElementById('event-due').value = '';
+            document.getElementById('event-title').value = '';
+            document.getElementById('event-desc').value = '';
+            document.getElementById('event-is-important').checked = false;
+        }
+
+        function renderMainTimelineTrack() {
+            const container = document.getElementById('timeline-visual-track');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const currentScope = document.getElementById('timeline-project-context-selector').value;
+
+            // Filters only the nodes corresponding to the selected project dropdown
+            const visibleNodes = dbNodes.filter(n => {
+                if (currentScope === 'Personal') {
+                    return n.scope === 'Personal' && n.creator === currentUser;
+                } else {
+                    return n.scope.toLowerCase() === currentScope.toLowerCase();
+                }
+            });
+
+            if (visibleNodes.length === 0) {
+                container.innerHTML = `<p style="color:#aaa; font-size:13px; margin:0;">No timeline tracking milestones configured for ${currentScope}. Create the project lifecycles above to start mapping milestones.</p>`;
+                return;
+            }
+
+            visibleNodes.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            visibleNodes.forEach(node => {
+                const importanceClass = node.isImportant ? 'critical' : '';
+                const criticalLabel = node.isImportant ? '<span class="badge" style="background:var(--accent-important); margin-right:5px;">CRITICAL TARGET</span>' : '';
+                const scopeLabel = `<span class="badge" style="background:#666;">Project Scope: ${node.scope}</span>`;
+
+                container.innerHTML += `
+                    <div class="interactive-node-card ${importanceClass}" onclick="openModalInspectorPanel(${node.id})">
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:bold; color:#666; margin-bottom:5px;">
+                            <span>🛫 Start: ${node.startDate}</span>
+                            <span style="color:var(--accent-important)">🏁 DUE: ${node.dueDate}</span>
+                        </div>
+                        <div style="font-size:15px; font-weight:bold; color:var(--primary-color);">${node.title}</div>
+                        <p style="margin:5px 0; font-size:13px; color:#444;">${node.desc || 'No descriptions log reported.'}</p>
+                        <div style="display:flex; margin-top:8px;">${criticalLabel} ${scopeLabel} <small style="margin-left:auto; color:#aaa;">By @${node.creator}</small></div>
+                    </div>
+                `;
+            });
+        }
+
+        function openModalInspectorPanel(nodeId) {
+            activeFocusedNodeId = nodeId;
+            const node = dbNodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            document.getElementById('modal-node-title').innerText = node.title;
+            document.getElementById('modal-node-dates').innerText = `From [${node.startDate}] to [${node.dueDate}]`;
+            document.getElementById('modal-node-desc').value = node.desc;
+
+            const logsBox = document.getElementById('modal-node-history');
+            logsBox.innerHTML = '';
+
+            if (node.auditHistory) {
+                node.auditHistory.forEach(log => {
+                    logsBox.innerHTML += `<div style="padding:3px 0; border-bottom:1px dashed #eee;"><b>[${log.timestamp}]:</b> ${log.msg}</div>`;
+                });
+            } else {
+                logsBox.innerHTML = '<i>No history markers found on asset.</i>';
+            }
+
+            document.getElementById('audit-modal-overlay').style.display = 'flex';
+        }
+
+        function closeModalInspector() {
+            document.getElementById('audit-modal-overlay').style.display = 'none';
+            activeFocusedNodeId = null;
+        }
+
+        function saveModalChanges() {
+            if (!activeFocusedNodeId) return;
+            pullDatabaseState();
+            const node = dbNodes.find(n => n.id === activeFocusedNodeId);
+            if (!node) return;
+
+            const nextDesc = document.getElementById('modal-node-desc').value.trim();
+            if (node.desc !== nextDesc) {
+                node.desc = nextDesc;
+                if (!node.auditHistory) node.auditHistory = [];
+                node.auditHistory.push({ timestamp: new Date().toLocaleString(), msg: `Altered description notes to: "${nextDesc}"` });
+                commitState('simp_nodes', dbNodes);
+                refreshAllWorkspaceComponents();
+                openModalInspectorPanel(activeFocusedNodeId);
+                alert("Milestone updated.");
+            }
+        }
+
+        function renderAllBranchDirectoriesView() {
+            const container = document.getElementById('all-directories-rendered-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const directoryMap = { "Personal Workspace": [] };
+            const activeTeams = getMyTeamsList();
+
+            activeTeams.forEach(tName => directoryMap[tName] = []);
+            dbNodes.forEach(node => {
+                if (node.scope === 'Personal' && node.creator === currentUser) directoryMap["Personal Workspace"].push(node);
+                else {
+                    const match = activeTeams.find(t => t.toLowerCase() === node.scope.toLowerCase());
+                    if (match) directoryMap[match].push(node);
+                }
+            });
+
+            for (const [scopeTitle, nodesArr] of Object.entries(directoryMap)) {
+                let nodeRowsHTML = '';
+                nodesArr.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                nodesArr.forEach(n => {
+                    nodeRowsHTML += `
+                        <div style="padding:8px; border-bottom:1px solid #eee; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+                            <span><b>[DUE: ${n.dueDate}]</b> ${n.title} <small style="color:#777;">(by @${n.creator})</small></span>
+                            <span>${n.isImportant ? '⚠️ Critical' : '✓ Standard'}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML += `
+                    <div class="panel-box">
+                        <h3>📂 Branch Directory: ${scopeTitle}</h3>
+                        <div>${nodeRowsHTML || '<p style="color:#aaa; font-size:12px; margin:0;">No records posted under this project context track.</p>'}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderExecutiveSummaryAbstract() {
+            const selectEl = document.getElementById('summary-persona-select');
+            const output = document.getElementById('summary-brief-output');
+            if (!selectEl || !output) return;
+
+            const persona = selectEl.value;
+            output.innerHTML = '';
+
+            const activeTeams = getMyTeamsList();
+            const targetedNodes = dbNodes.filter(n => (n.scope === 'Personal' && n.creator === currentUser) || activeTeams.some(t => t.toLowerCase() === n.scope.toLowerCase()));
+            const priorityOnes = targetedNodes.filter(n => n.isImportant);
+
+            let txt = '';
+            if (persona === 'investor') {
+                txt += `<b>💼 Portfolio Investor Brief:</b><br><hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">`;
+                txt += `Active tracking workspace maps <b>${targetedNodes.length} comprehensive milestones</b> across active operational horizons.<br><br>`;
+                if (priorityOnes.length === 0) {
+                    txt += `<i>No core critical priorities tracked.</i>`;
+                } else {
+                    priorityOnes.forEach(p => txt += `• <b>[Project: ${p.scope}] [DUE: ${p.dueDate}] - ${p.title}</b><br>`);
+                }
+            } else {
+                txt += `<b>🌱 Engineering Team Onboarding Sheet:</b><br><hr style="border:0; border-top:1px solid #ddd; margin:10px 0;">`;
+                if (targetedNodes.length === 0) {
+                    txt += `<i>No milestones found.</i>`;
+                } else {
+                    targetedNodes.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                    targetedNodes.forEach(t => txt += `🎯 <b>[Scope: ${t.scope}] [DUE: ${t.dueDate}] - ${t.title}</b> <small style="color:#666;">(Owner: @${t.creator})</small><br>`);
+                }
+            }
+            output.innerHTML = txt;
+        }
+
+        function createTeamDirectly() {
+            pullDatabaseState();
+            const name = document.getElementById('new-team-id-input').value.trim();
+            if (!name) return;
+
+            if (getMyTeamsList().length >= 2) { alert("Limit Exception: You cannot belong to more than 2 team groups simultaneously."); return; }
+            if (dbTeams.find(t => t.name.toLowerCase() === name.toLowerCase())) { alert("Team name already exists."); return; }
+
+            dbTeams.push({ id: Date.now(), name: name, owner: currentUser, members: [] });
+            commitState('simp_teams', dbTeams);
+            document.getElementById('new-team-id-input').value = '';
+
+            syncProjectDropdownMenu();
+            refreshAllWorkspaceComponents();
+            alert(`Group context registered: "${name}". You can now switch to this tracking workspace inside your Progression Track!`);
+        }
+
+        function sendTeamRequest() {
+            pullDatabaseState();
+
+            const team = document.getElementById('join-team-name').value.trim();
+            const owner = document.getElementById('join-team-owner').value.trim();
+
+            if (!team || !owner) { alert("Please complete form entry labels."); return; }
+
+            const cleanOwner = owner.replace('@', '').trim();
+            const cleanCurrentUser = currentUser.replace('@', '').trim();
+
+            if (cleanOwner.toLowerCase() === cleanCurrentUser.toLowerCase()) {
+                alert("Routing Error: You cannot send an invitation to yourself.");
+                return;
+            }
+
+            const targetTeamObj = dbTeams.find(t =>
+                t.name.toLowerCase() === team.toLowerCase() &&
+                t.owner.toLowerCase() === cleanOwner.toLowerCase()
+            );
+
+            if (!targetTeamObj) {
+                alert(`Routing Error: The team "${team}" owned by "${cleanOwner}" could not be found.\n\nVerify that the parameters match exactly.`);
+                return;
+            }
+
+            dbInvites.push({
+                id: Date.now(),
+                sender: cleanCurrentUser,
+                recipient: targetTeamObj.owner,
+                teamName: targetTeamObj.name,
+                status: 'pending'
+            });
+
+            commitState('simp_invites', dbInvites);
+            alert(`Success! Invitation sent directly to @${targetTeamObj.owner}`);
+            document.getElementById('join-team-name').value = '';
+            document.getElementById('join-team-owner').value = '';
+
+            refreshAllWorkspaceComponents();
+        }
+
+        function renderActiveTeamsDirectory() {
+            const container = document.getElementById('active-teams-directory-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const joined = dbTeams.filter(t => t.owner.toLowerCase() === currentUser.toLowerCase() || t.members.some(m => m.toLowerCase() === currentUser.toLowerCase()));
+
+            if (joined.length === 0) {
+                container.innerHTML = '<i>Independent Status (No group connections)</i>';
+                return;
+            }
+            joined.forEach(t => {
+                const cleanMembers = t.members.filter(m => m && m !== "None");
+                const membersListString = cleanMembers.length > 0 ? ", " + cleanMembers.map(m => '@' + m).join(', ') : "";
+                container.innerHTML += `
+                    <div style="padding:10px; background:#fff; border:1px solid #ddd; border-radius:6px; margin-top:5px; font-size:13px;">
+                        👥 <b>${t.name}</b> (Admin: @${t.owner})<br>
+                        <span style="font-size:11px; color:#555;">Members: [@${t.owner}${membersListString}]</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderInboxAndInvites() {
+            const container = document.getElementById('inbox-cards-container');
+            const badge = document.getElementById('badge-count-ui');
+            if (!container || !badge) return;
+            container.innerHTML = '';
+
+            const requests = dbInvites.filter(i => i.recipient.toLowerCase() === currentUser.toLowerCase() && i.status === 'pending');
+            if (requests.length > 0) { badge.style.display = 'inline-block'; badge.innerText = requests.length; }
+            else { badge.style.display = 'none'; }
+
+            if (requests.length === 0) { container.innerHTML = '<p style="color:#777; margin:0; font-size:13px;">Notification feed clear.</p>'; return; }
+            requests.forEach(r => {
+                container.innerHTML += `
+                    <div class="panel-box" style="background:white; font-size:13px;">
+                        User <b>@${r.sender}</b> requested entry access clearance into group workspace: <b>${r.teamName}</b>
+                        <div style="margin-top:8px; display:flex; gap:10px;">
+                            <button onclick="resolveRequest(${r.id}, 'accepted')" style="background:green; padding:4px 8px; font-size:12px;">Approve</button>
+                            <button onclick="resolveRequest(${r.id}, 'declined')" style="background:red; padding:4px 8px; font-size:12px;">Deny</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function resolveRequest(id, choice) {
+            pullDatabaseState();
+            const inv = dbInvites.find(i => i.id === id);
+            if (!inv) return;
+            inv.status = choice;
+
+            if (choice === 'accepted') {
+                let teamObj = dbTeams.find(t => t.name.toLowerCase() === inv.teamName.toLowerCase());
+                if (teamObj) {
+                    const checkCount = dbTeams.filter(t => t.owner.toLowerCase() === inv.sender.toLowerCase() || t.members.some(m => m.toLowerCase() === inv.sender.toLowerCase())).length;
+                    if (checkCount >= 2) {
+                        alert("Aborted: The requesting target user profile is already allocated to their maximum 2 groups.");
+                        inv.status = 'declined';
+                    } else {
+                        teamObj.members = teamObj.members.filter(m => m && m !== "None");
+                        if (!teamObj.members.some(m => m.toLowerCase() === inv.sender.toLowerCase())) {
+                            teamObj.members.push(inv.sender);
+                        }
+                    }
+                }
+            }
+            commitState('simp_invites', dbInvites);
+            commitState('simp_teams', dbTeams);
+
+            syncProjectDropdownMenu();
+            refreshAllWorkspaceComponents();
+        }
+
+        function renderChatStreamMessages() {
+            const channelSelect = document.getElementById('chat-channel-select');
+            const chatWrapper = document.getElementById('chat-lock-container');
+            if (!channelSelect || !chatWrapper) return;
+
+            if (!channelSelect.value) {
+                chatWrapper.innerHTML = '<p style="color:#777; font-size:12px; text-align:center; padding:30px 10px; margin:0;">Join an active group to unlock communications chat terminals.</p>';
+                return;
+            }
+
+            if (!document.getElementById('chat-stream-box')) {
+                chatWrapper.innerHTML = `
+                    <div id="chat-stream-box" class="chat-messages-stream"></div>
+                    <div style="padding:10px; border-top:1px solid #ddd; background:white; display:flex; gap:5px;">
+                        <input type="text" id="chat-msg-input" placeholder="Type message data..." onkeydown="if(event.key==='Enter') dispatchMessagePayload()">
+                        <button onclick="dispatchMessagePayload()" style="width:70px; padding:0; margin:0;">Send</button>
+                    </div>
+                `;
+            }
+
+            const stream = document.getElementById('chat-stream-box');
+            const channel = channelSelect.value;
+            const contextMsg = dbChat.filter(c => c.channel.toLowerCase() === channel.toLowerCase());
+
+            let HTMLcontent = '';
+            if (contextMsg.length === 0) {
+                HTMLcontent = '<p style="color:#aaa; font-size:11px; text-align:center; margin:auto; padding:10px;">Trace ready. Send a message to get started.</p>';
+            } else {
+                contextMsg.forEach(m => {
+                    const isMe = m.sender.toLowerCase() === currentUser.toLowerCase() ? 'align-self: flex-end; background:#e8e8f5;' : '';
+                    HTMLcontent += `
+                        <div class="chat-bubble" style="${isMe}">
+                            <b style="color:var(--primary-color); font-size:11px; display:block;">@${m.sender}:</b>
+                            <span style="word-wrap:break-word;">${m.message}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            if (stream && stream.innerHTML !== HTMLcontent) {
+                stream.innerHTML = HTMLcontent;
+                stream.scrollTop = stream.scrollHeight;
+            }
+        }
+
+        function dispatchMessagePayload() {
+            pullDatabaseState();
+            const input = document.getElementById('chat-msg-input');
+            const channel = document.getElementById('chat-channel-select').value;
+            const txt = input.value.trim();
+            if (!txt || !channel) return;
+
+            dbChat.push({ channel: channel, sender: currentUser, message: txt });
+            commitState('simp_chat', dbChat);
+            input.value = '';
+            renderChatStreamMessages();
+        }
+
+        function launchStandaloneChatWindow() {
+            window.open(window.location.href + "?standaloneChat=true", "_blank");
+        }
+
+        function renderStandaloneTabRoomLayout() {
+            document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; height:100vh; max-width:600px; margin:0 auto; border-left:1px solid #ddd; border-right:1px solid #ddd; background:white;">
+                    <div style="background:#3c3b85; color:white; padding:15px; font-weight:bold; text-align:center;">💬 Isolated ProjectChat Workspace Window</div>
+                    <div id="chat-stream" style="flex-grow:1; padding:20px; overflow-y:auto; background:#f4f4f9; display:flex; flex-direction:column; gap:10px;"></div>
+                    <div style="padding:15px; border-top:1px solid #ccc; display:flex; gap:10px; background:white;">
+                        <input type="text" id="chat-message-payload" style="flex-grow:1; padding:10px;" placeholder="Send text data package info...">
+                        <button onclick="pushStandaloneMessage()" style="background:#3c3b85; color:white; padding:10px 20px; width:auto; margin:0;">Send</button>
+                    </div>
+                </div>
+            `;
+            currentUser = sessionStorage.getItem('simp_active_user') || 'GuestAccount';
+
+            const loop = () => {
+                dbChat = JSON.parse(localStorage.getItem('simp_chat')) || [];
+                dbTeams = JSON.parse(localStorage.getItem('simp_teams')) || [];
+                const matchedTeams = dbTeams.filter(t => t.owner.toLowerCase() === currentUser.toLowerCase() || t.members.some(m => m.toLowerCase() === currentUser.toLowerCase())).map(t => t.name);
+
+                const container = document.getElementById('chat-stream');
+                let newHTML = '';
+
+                const visibleMessages = dbChat.filter(msg => matchedTeams.some(t => t.toLowerCase() === msg.channel.toLowerCase()));
+
+                if (visibleMessages.length === 0) {
+                    newHTML = '<p style="color:#aaa; text-align:center; margin:auto;">No active group conversations.</p>';
+                } else {
+                    visibleMessages.slice(-50).forEach(msg => {
+                        const isMe = msg.sender.toLowerCase() === currentUser.toLowerCase() ? 'background:#e8e8f5; align-self:flex-end;' : '';
+                        newHTML += `
+                            <div style="background:white; padding:10px; border-radius:6px; border:1px solid #ddd; max-width:80%; ${isMe}">
+                                <small style="color:#555; font-weight:bold;">[${msg.channel}] @${msg.sender}</small>
+                                <div style="margin-top:4px; font-size:14px;">${msg.message}</div>
+                            </div>
+                        `;
+                    });
+                }
+                if (container && container.innerHTML !== newHTML) {
+                    container.innerHTML = newHTML;
+                    container.scrollTop = container.scrollHeight;
+                }
+            };
+
+            window.pushStandaloneMessage = function () {
+                const txt = document.getElementById('chat-message-payload').value.trim();
+                if (!txt) return;
+
+                dbTeams = JSON.parse(localStorage.getItem('simp_teams')) || [];
+                const matchedTeams = dbTeams.filter(t => t.owner.toLowerCase() === currentUser.toLowerCase() || t.members.some(m => m.toLowerCase() === currentUser.toLowerCase())).map(t => t.name);
+
+                if (matchedTeams.length === 0) { alert("Join a group first."); return; }
+                const targetChannel = matchedTeams[0];
+
+                const arr = JSON.parse(localStorage.getItem('simp_chat')) || [];
+                arr.push({ channel: targetChannel, sender: currentUser, message: txt });
+                localStorage.setItem('simp_chat', JSON.stringify(arr));
+                document.getElementById('chat-message-payload').value = '';
+                loop();
+            };
+
+            document.getElementById('chat-message-payload').onkeydown = (e) => { if (e.key === 'Enter') pushStandaloneMessage(); };
+            loop();
+            setInterval(loop, 1000);
+        }
+
+        function getMyTeamsList() {
+            return dbTeams.filter(t => t.owner.toLowerCase() === currentUser.toLowerCase() || t.members.some(m => m.toLowerCase() === currentUser.toLowerCase())).map(t => t.name);
+        }
+
+        function rebuildDropdownSelectors() {
+            const chatChannel = document.getElementById('chat-channel-select');
+            if (!chatChannel) return;
+
+            const prevChatVal = chatChannel.value;
+            chatChannel.innerHTML = '';
+
+            const myTeamsList = getMyTeamsList();
+            myTeamsList.forEach(name => {
+                chatChannel.innerHTML += `<option value="${name}">${name} Room</option>`;
+            });
+
+            if (prevChatVal) chatChannel.value = prevChatVal;
+        }
+
+        function refreshAllWorkspaceComponents() {
+            if (!currentUser) return;
+            rebuildDropdownSelectors();
+            renderMainTimelineTrack();
+            renderAllBranchDirectoriesView();
+            renderExecutiveSummaryAbstract();
+            renderActiveTeamsDirectory();
+            renderInboxAndInvites();
+            renderChatStreamMessages();
+        }
+
+        function backgroundSyncEnginePass() {
+            if (!currentUser) return;
+
+            const prevTeamsCount = dbTeams.filter(t => t.owner.toLowerCase() === currentUser.toLowerCase() || t.members.some(m => m.toLowerCase() === currentUser.toLowerCase())).length;
+
+            if (localStorage.getItem('simp_nodes')) dbNodes = JSON.parse(localStorage.getItem('simp_nodes'));
+            if (localStorage.getItem('simp_teams')) dbTeams = JSON.parse(localStorage.getItem('simp_teams'));
+            if (localStorage.getItem('simp_invites')) dbInvites = JSON.parse(localStorage.getItem('simp_invites'));
+            if (localStorage.getItem('simp_chat')) dbChat = JSON.parse(localStorage.getItem('simp_chat'));
+
+            const nextTeamsCount = dbTeams.filter(t => t.owner.toLowerCase() === currentUser.toLowerCase() || t.members.some(m => m.toLowerCase() === currentUser.toLowerCase())).length;
+
+            // If group access changes while online, rebuild options immediately
+            if (prevTeamsCount !== nextTeamsCount) {
+                syncProjectDropdownMenu();
+            }
+
+            renderInboxAndInvites();
+            renderActiveTeamsDirectory();
+
+            const msgInput = document.getElementById('chat-msg-input');
+            if (!msgInput || document.activeElement.id !== 'chat-msg-input') {
+                renderChatStreamMessages();
+            }
+        }
+
+        function commitState(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+        function downloadBackupPackage() {
+            const dump = { nodes: dbNodes, teams: dbTeams, invites: dbInvites, chat: dbChat };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dump));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `${currentUser}_master_backup.json`);
+            document.body.appendChild(dl);
+            dl.click();
+            dl.remove();
+        }
+
+        function uploadOverwriteBackupPackage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (confirm("Confirm asset backup overwrite?")) {
+                        if (parsed.nodes) commitState('simp_nodes', parsed.nodes);
+                        if (parsed.teams) commitState('simp_teams', parsed.teams);
+                        if (parsed.invites) commitState('simp_invites', parsed.invites);
+                        if (parsed.chat) commitState('simp_chat', parsed.chat);
+                        location.reload();
+                    }
+                } catch (err) { alert("Corrupted file structure."); }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+
+</html>
