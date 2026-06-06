@@ -1,2 +1,2 @@
 # projectimelinecreator
-Just for the JS and google authentification aniamtions and html css were done by me
+A website that helps anyone mage their events share it and share it with friends.
